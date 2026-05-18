@@ -3,37 +3,144 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kling Motion Control - Vercel</title>
+    <title>Kling Motion Control - Drag & Drop</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 700px; margin: 40px auto; padding: 20px; background: #0f0f0f; color: #e5e5e5; }
-       .container { background: #1a1a1a; padding: 30px; border-radius: 12px; border: 1px solid #2a2a2a; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 700px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #0f0f0f;
+            color: #e5e5e5;
+        }
+       .container {
+            background: #1a1a1a;
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid #2a2a2a;
+        }
+       .api-key-section {
+            background: #0f0f0f;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #6366f1;
+            margin-bottom: 24px;
+        }
+       .api-key-section h3 {
+            margin: 0 0 8px 0;
+            color: #6366f1;
+            font-size: 16px;
+        }
         h1 { margin-top: 0; color: #fff; }
-        label { display: block; margin-top: 16px; margin-bottom: 6px; font-weight: 600; font-size: 14px; }
-        input, textarea, select { width: 100%; padding: 10px 12px; background: #0f0f0f; border: 1px solid #333; border-radius: 8px; color: #e5e5e5; font-size: 14px; box-sizing: border-box; }
-       .dropzone { border: 2px dashed #444; border-radius: 8px; padding: 30px 20px; text-align: center; cursor: pointer; background: #0f0f0f; transition: all 0.2s; margin-top: 6px; }
-       .dropzone:hover,.dropzone.dragover { border-color: #6366f1; background: #1a1a1f; }
+        label {
+            display: block;
+            margin-top: 16px;
+            margin-bottom: 6px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 10px 12px;
+            background: #0f0f0f;
+            border: 1px solid #333;
+            border-radius: 8px;
+            color: #e5e5e5;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #6366f1;
+        }
+       .dropzone {
+            border: 2px dashed #444;
+            border-radius: 8px;
+            padding: 30px 20px;
+            text-align: center;
+            cursor: pointer;
+            background: #0f0f0f;
+            transition: all 0.2s;
+            margin-top: 6px;
+        }
+       .dropzone:hover,.dropzone.dragover {
+            border-color: #6366f1;
+            background: #1a1a1f;
+        }
        .dropzone input { display: none; }
        .dropzone p { margin: 0; color: #888; font-size: 14px; }
        .dropzone strong { color: #6366f1; }
-       .preview { margin-top: 12px; display: none; }
-       .preview img,.preview video { max-width: 100%; max-height: 200px; border-radius: 8px; border: 1px solid #333; }
-       .file-info { font-size: 12px; color: #22c55e; margin-top: 8px; word-break: break-all; }
-        button { margin-top: 24px; width: 100%; padding: 12px; background: #6366f1; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 15px; }
+       .preview {
+            margin-top: 12px;
+            display: none;
+        }
+       .preview img,.preview video {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 8px;
+            border: 1px solid #333;
+        }
+       .file-info {
+            font-size: 12px;
+            color: #22c55e;
+            margin-top: 8px;
+            word-break: break-all;
+        }
+        button {
+            margin-top: 24px;
+            width: 100%;
+            padding: 12px;
+            background: #6366f1;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 15px;
+        }
         button:disabled { background: #3a3a3a; cursor: not-allowed; }
         button:hover:not(:disabled) { background: #4f46e5; }
-        #result { margin-top: 24px; padding: 16px; background: #0f0f0f; border-radius: 8px; border: 1px solid #333; white-space: pre-wrap; word-wrap: break-word; font-family: 'Courier New', monospace; font-size: 13px; display: none; }
+        #result {
+            margin-top: 24px;
+            padding: 16px;
+            background: #0f0f0f;
+            border-radius: 8px;
+            border: 1px solid #333;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            display: none;
+        }
        .success { border-color: #22c55e; }
        .error { border-color: #ef4444; }
        .row { display: flex; gap: 12px; }
        .row > div { flex: 1; }
        .note { font-size: 12px; color: #888; margin-top: 4px; }
        .loading { color: #fbbf24; }
+       .warning { color: #f59e0b; font-size: 12px; margin-top: 6px; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Kling v2.6 Motion Control</h1>
-        <p style="color:#999; margin-top:-8px; margin-bottom:24px">Deploy di Vercel - API key aman di server</p>
+        <p style="color:#999; margin-top:-8px; margin-bottom:24px">Drag & drop gambar & video langsung</p>
+
+        <!-- API KEY DI DEPAN, TIDAK DISIMPAN -->
+        <div class="api-key-section">
+            <h3>🔑 API Key Magnific</h3>
+            <input
+                type="password"
+                id="apiKey"
+                placeholder="Masukkan API Key kamu disini"
+                autocomplete="off"
+                autocorrect="off"
+                autocapitalize="off"
+                spellcheck="false"
+                required
+            >
+            <div class="warning">⚠️ API Key tidak disimpan. Masukkan ulang setiap buka halaman ini.</div>
+        </div>
 
         <label>Image Karakter *</label>
         <div class="dropzone" id="imageDropzone">
@@ -82,13 +189,21 @@
         let uploadedImageUrl = null;
         let uploadedVideoUrl = null;
 
+        // Hapus API key dari memory saat halaman ditutup
+        window.addEventListener('beforeunload', () => {
+            document.getElementById('apiKey').value = '';
+        });
+
         function setupDropzone(dropzoneId, fileInputId, previewId, fileType) {
             const dropzone = document.getElementById(dropzoneId);
             const fileInput = document.getElementById(fileInputId);
             const preview = document.getElementById(previewId);
 
             dropzone.onclick = () => fileInput.click();
-            dropzone.ondragover = (e) => { e.preventDefault(); dropzone.classList.add('dragover'); };
+            dropzone.ondragover = (e) => {
+                e.preventDefault();
+                dropzone.classList.add('dragover');
+            };
             dropzone.ondragleave = () => dropzone.classList.remove('dragover');
             dropzone.ondrop = (e) => {
                 e.preventDefault();
@@ -103,31 +218,42 @@
 
         async function handleFile(file, preview, type) {
             if (!file) return;
-            const maxSize = type === 'image'? 10 * 1024 * 1024 : 50 * 1024;
+
+            const maxSize = type === 'image'? 10 * 1024 * 1024 : 50 * 1024 * 1024;
             if (file.size > maxSize) {
                 alert(`File terlalu besar. Max ${maxSize / 1024 / 1024}MB`);
                 return;
             }
 
             preview.style.display = 'block';
-            preview.innerHTML = '<p class="loading">Uploading...</p>';
+            preview.innerHTML = '<p class="loading">Uploading ke tmpfiles.org...</p>';
 
             const formData = new FormData();
             formData.append('file', file);
 
             try {
-                const res = await fetch('https://tmpfiles.org/api/v1/upload', { method: 'POST', body: formData });
+                const res = await fetch('https://tmpfiles.org/api/v1/upload', {
+                    method: 'POST',
+                    body: formData
+                });
                 const data = await res.json();
+
                 if (data.status!== 'success') throw new Error('Upload gagal');
 
                 const directUrl = data.data.url.replace('tmpfiles.org/', 'tmpfiles.org/dl/');
 
                 if (type === 'image') {
                     uploadedImageUrl = directUrl;
-                    preview.innerHTML = `<img src="${URL.createObjectURL(file)}" alt="Preview"><div class="file-info">✓ Uploaded</div>`;
+                    preview.innerHTML = `
+                        <img src="${URL.createObjectURL(file)}" alt="Preview">
+                        <div class="file-info">✓ Uploaded: ${file.name}</div>
+                    `;
                 } else {
                     uploadedVideoUrl = directUrl;
-                    preview.innerHTML = `<video src="${URL.createObjectURL(file)}" controls></video><div class="file-info">✓ Uploaded</div>`;
+                    preview.innerHTML = `
+                        <video src="${URL.createObjectURL(file)}" controls></video>
+                        <div class="file-info">✓ Uploaded: ${file.name}</div>
+                    `;
                 }
             } catch (err) {
                 preview.innerHTML = `<p style="color:#ef4444">Upload gagal: ${err.message}</p>`;
@@ -135,6 +261,8 @@
         }
 
         async function generateVideo() {
+            // Ambil API key langsung dari input, tidak disimpan
+            const apiKey = document.getElementById('apiKey').value.trim();
             const prompt = document.getElementById('prompt').value.trim();
             const orientation = document.getElementById('orientation').value;
             const cfgScale = parseFloat(document.getElementById('cfgScale').value);
@@ -143,6 +271,11 @@
             const resultDiv = document.getElementById('result');
             const videoResult = document.getElementById('videoResult');
 
+            if (!apiKey) {
+                alert('API Key wajib diisi!');
+                document.getElementById('apiKey').focus();
+                return;
+            }
             if (!uploadedImageUrl ||!uploadedVideoUrl ||!prompt) {
                 alert('Upload gambar, video, dan isi prompt dulu!');
                 return;
@@ -152,29 +285,35 @@
             btn.textContent = 'Mengirim request...';
             resultDiv.style.display = 'block';
             resultDiv.className = '';
-            resultDiv.textContent = 'Mengirim ke Vercel API...';
+            resultDiv.textContent = 'Mengirim ke Magnific API...';
             videoResult.innerHTML = '';
 
+            const payload = {
+                image_url: uploadedImageUrl,
+                video_url: uploadedVideoUrl,
+                prompt: prompt,
+                character_orientation: orientation,
+                cfg_scale: cfgScale
+            };
+
             try {
-                const response = await fetch('/api/generate', {
+                const response = await fetch('https://api.magnific.com/v1/ai/video/kling-v2-6-motion-control-std', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        image_url: uploadedImageUrl,
-                        video_url: uploadedVideoUrl,
-                        prompt: prompt,
-                        character_orientation: orientation,
-                        cfg_scale: cfgScale
-                    })
+                    headers: {
+                        'x-magnific-api-key': apiKey,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
                 });
 
                 const data = await response.json();
-                if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+                if (!response.ok) throw new Error(data.message || `HTTP ${response.status}`);
 
                 resultDiv.classList.add('success');
-                resultDiv.textContent = 'Job berhasil dibuat!\n\nJob ID: ' + data.job_id;
+                resultDiv.textContent = 'Job berhasil dibuat!\n\n' + JSON.stringify(data, null, 2);
 
-                if (data.job_id) pollStatus(data.job_id, btn, resultDiv, videoResult);
+                const jobId = data.job_id;
+                if (jobId) pollStatus(jobId, apiKey, btn, resultDiv, videoResult);
                 else {
                     btn.disabled = false;
                     btn.textContent = 'Generate Video';
@@ -188,18 +327,24 @@
             }
         }
 
-        async function pollStatus(jobId, btn, resultDiv, videoResult) {
+        async function pollStatus(jobId, apiKey, btn, resultDiv, videoResult) {
+            const statusUrl = `https://api.magnific.com/v1/ai/video/status/${jobId}`;
+
             const interval = setInterval(async () => {
                 try {
-                    const res = await fetch(`/api/status?job_id=${jobId}`);
+                    const res = await fetch(statusUrl, {
+                        headers: { 'x-magnific-api-key': apiKey }
+                    });
                     const data = await res.json();
+
                     const status = data.status;
-                    resultDiv.textContent = `Status: ${status}\n\nJob ID: ${jobId}`;
+                    resultDiv.textContent = `Status: ${status}\n\n` + JSON.stringify(data, null, 2);
 
                     if (status === 'completed') {
                         clearInterval(interval);
                         btn.disabled = false;
                         btn.textContent = 'Generate Video';
+
                         if (data.video_url) {
                             videoResult.innerHTML = `
                                 <video controls autoplay style="width:100%;margin-top:16px;border-radius:8px">
@@ -213,12 +358,12 @@
                         btn.disabled = false;
                         btn.textContent = 'Generate Video';
                         resultDiv.classList.add('error');
-                        resultDiv.textContent += '\n\nError: ' + (data.error || 'Unknown');
                     }
                 } catch (e) {
                     clearInterval(interval);
                     btn.disabled = false;
                     btn.textContent = 'Generate Video';
+                    resultDiv.classList.add('error');
                 }
             }, 5000);
         }

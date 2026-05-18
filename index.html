@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kling Motion Control - Vercel</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 700px; margin: 40px auto; padding: 20px; background: #0f0f0f; color: #e5e5e5; }
+       .container { background: #1a1a1a; padding: 30px; border-radius: 12px; border: 1px solid #2a2a2a; }
+        h1 { margin-top: 0; color: #fff; }
+        label { display: block; margin-top: 16px; margin-bottom: 6px; font-weight: 600; font-size: 14px; }
+        input, textarea, select { width: 100%; padding: 10px 12px; background: #0f0f0f; border: 1px solid #333; border-radius: 8px; color: #e5e5e5; font-size: 14px; box-sizing: border-box; }
+       .dropzone { border: 2px dashed #444; border-radius: 8px; padding: 30px 20px; text-align: center; cursor: pointer; background: #0f0f0f; transition: all 0.2s; margin-top: 6px; }
+       .dropzone:hover,.dropzone.dragover { border-color: #6366f1; background: #1a1a1f; }
+       .dropzone input { display: none; }
+       .dropzone p { margin: 0; color: #888; font-size: 14px; }
+       .dropzone strong { color: #6366f1; }
+       .preview { margin-top: 12px; display: none; }
+       .preview img,.preview video { max-width: 100%; max-height: 200px; border-radius: 8px; border: 1px solid #333; }
+       .file-info { font-size: 12px; color: #22c55e; margin-top: 8px; word-break: break-all; }
+        button { margin-top: 24px; width: 100%; padding: 12px; background: #6366f1; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 15px; }
+        button:disabled { background: #3a3a3a; cursor: not-allowed; }
+        button:hover:not(:disabled) { background: #4f46e5; }
+        #result { margin-top: 24px; padding: 16px; background: #0f0f0f; border-radius: 8px; border: 1px solid #333; white-space: pre-wrap; word-wrap: break-word; font-family: 'Courier New', monospace; font-size: 13px; display: none; }
+       .success { border-color: #22c55e; }
+       .error { border-color: #ef4444; }
+       .row { display: flex; gap: 12px; }
+       .row > div { flex: 1; }
+       .note { font-size: 12px; color: #888; margin-top: 4px; }
+       .loading { color: #fbbf24; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Kling v2.6 Motion Control</h1>
+        <p style="color:#999; margin-top:-8px; margin-bottom:24px">Deploy di Vercel - API key aman di server</p>
+
+        <label>Image Karakter *</label>
+        <div class="dropzone" id="imageDropzone">
+            <input type="file" id="imageFile" accept="image/*">
+            <p>Drag & drop gambar atau <strong>klik pilih file</strong></p>
+            <div class="note">PNG, JPG, WEBP. Max 10MB</div>
+        </div>
+        <div class="preview" id="imagePreview"></div>
+
+        <label>Video Motion *</label>
+        <div class="dropzone" id="videoDropzone">
+            <input type="file" id="videoFile" accept="video/*">
+            <p>Drag & drop video atau <strong>klik pilih file</strong></p>
+            <div class="note">MP4, MOV. Max 50MB</div>
+        </div>
+        <div class="preview" id="videoPreview"></div>
+
+        <label>Prompt *</label>
+        <textarea id="prompt" rows="3" placeholder="karakter menari di pantai, cinematic lighting, 4k" required></textarea>
+
+        <div class="row">
+            <div>
+                <label>Orientation</label>
+                <select id="orientation">
+                    <option value="video">Video</option>
+                    <option value="image">Image</option>
+                </select>
+            </div>
+            <div>
+                <label>CFG Scale: <span id="cfgValue">0.5</span></label>
+                <input type="range" id="cfgScale" min="0" max="1" step="0.1" value="0.5">
+            </div>
+        </div>
+
+        <button id="generateBtn" onclick="generateVideo()">Generate Video</button>
+
+        <div id="result"></div>
+        <div id="videoResult"></div>
+    </div>
+
+    <script>
+        const cfgSlider = document.getElementById('cfgScale');
+        const cfgValue = document.getElementById('cfgValue');
+        cfgSlider.oninput = () => cfgValue.textContent = cfgSlider.value;
+
+        let uploadedImageUrl = null;
+        let uploadedVideoUrl = null;
+
+        function setupDropzone(dropzoneId, fileInputId, previewId, fileType) {
+            const dropzone = document.getElementById(dropzoneId);
+            const fileInput = document.getElementById(fileInputId);
+            const preview = document.getElementById(previewId);
+
+            dropzone.onclick = () => fileInput.click();
+            dropzone.ondragover = (e) => { e.preventDefault(); dropzone.classList.add('dragover'); };
+            dropzone.ondragleave = () => dropzone.classList.remove('dragover');
+            dropzone.ondrop = (e) => {
+                e.preventDefault();
+                dropzone.classList.remove('dragover');
+                handleFile(e.dataTransfer.files[0], preview, fileType);
+            };
+            fileInput.onchange = (e) => handleFile(e.target.files[0], preview, fileType);
+        }
+
+        setupDropzone('imageDropzone', 'imageFile', 'imagePreview', 'image');
+        setupDropzone('videoDropzone', 'videoFile', 'videoPreview', 'video');
+
+        async function handleFile(file, preview, type) {
+            if (!file) return;
+            const maxSize = type === 'image'? 10 * 1024 * 1024 : 50 * 1024;
+            if (file.size > maxSize) {
+                alert(`File terlalu besar. Max ${maxSize / 1024 / 1024}MB`);
+                return;
+            }
+
+            preview.style.display = 'block';
+            preview.innerHTML = '<p class="loading">Uploading...</p>';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const res = await fetch('https://tmpfiles.org/api/v1/upload', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (data.status!== 'success') throw new Error('Upload gagal');
+
+                const directUrl = data.data.url.replace('tmpfiles.org/', 'tmpfiles.org/dl/');
+
+                if (type === 'image') {
+                    uploadedImageUrl = directUrl;
+                    preview.innerHTML = `<img src="${URL.createObjectURL(file)}" alt="Preview"><div class="file-info">✓ Uploaded</div>`;
+                } else {
+                    uploadedVideoUrl = directUrl;
+                    preview.innerHTML = `<video src="${URL.createObjectURL(file)}" controls></video><div class="file-info">✓ Uploaded</div>`;
+                }
+            } catch (err) {
+                preview.innerHTML = `<p style="color:#ef4444">Upload gagal: ${err.message}</p>`;
+            }
+        }
+
+        async function generateVideo() {
+            const prompt = document.getElementById('prompt').value.trim();
+            const orientation = document.getElementById('orientation').value;
+            const cfgScale = parseFloat(document.getElementById('cfgScale').value);
+
+            const btn = document.getElementById('generateBtn');
+            const resultDiv = document.getElementById('result');
+            const videoResult = document.getElementById('videoResult');
+
+            if (!uploadedImageUrl ||!uploadedVideoUrl ||!prompt) {
+                alert('Upload gambar, video, dan isi prompt dulu!');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Mengirim request...';
+            resultDiv.style.display = 'block';
+            resultDiv.className = '';
+            resultDiv.textContent = 'Mengirim ke Vercel API...';
+            videoResult.innerHTML = '';
+
+            try {
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        image_url: uploadedImageUrl,
+                        video_url: uploadedVideoUrl,
+                        prompt: prompt,
+                        character_orientation: orientation,
+                        cfg_scale: cfgScale
+                    })
+                });
+
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+
+                resultDiv.classList.add('success');
+                resultDiv.textContent = 'Job berhasil dibuat!\n\nJob ID: ' + data.job_id;
+
+                if (data.job_id) pollStatus(data.job_id, btn, resultDiv, videoResult);
+                else {
+                    btn.disabled = false;
+                    btn.textContent = 'Generate Video';
+                }
+
+            } catch (err) {
+                resultDiv.classList.add('error');
+                resultDiv.textContent = 'Error: ' + err.message;
+                btn.disabled = false;
+                btn.textContent = 'Generate Video';
+            }
+        }
+
+        async function pollStatus(jobId, btn, resultDiv, videoResult) {
+            const interval = setInterval(async () => {
+                try {
+                    const res = await fetch(`/api/status?job_id=${jobId}`);
+                    const data = await res.json();
+                    const status = data.status;
+                    resultDiv.textContent = `Status: ${status}\n\nJob ID: ${jobId}`;
+
+                    if (status === 'completed') {
+                        clearInterval(interval);
+                        btn.disabled = false;
+                        btn.textContent = 'Generate Video';
+                        if (data.video_url) {
+                            videoResult.innerHTML = `
+                                <video controls autoplay style="width:100%;margin-top:16px;border-radius:8px">
+                                    <source src="${data.video_url}" type="video/mp4">
+                                </video>
+                                <a href="${data.video_url}" target="_blank" style="color:#6366f1;display:block;margin-top:8px">Download Video</a>
+                            `;
+                        }
+                    } else if (status === 'failed') {
+                        clearInterval(interval);
+                        btn.disabled = false;
+                        btn.textContent = 'Generate Video';
+                        resultDiv.classList.add('error');
+                        resultDiv.textContent += '\n\nError: ' + (data.error || 'Unknown');
+                    }
+                } catch (e) {
+                    clearInterval(interval);
+                    btn.disabled = false;
+                    btn.textContent = 'Generate Video';
+                }
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
